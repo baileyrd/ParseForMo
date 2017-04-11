@@ -60,55 +60,44 @@ class ParseObj(object):
     """
 
     def __init__(self, file, startToken, endToken):
-        """Example of docstring on the __init__ method.
+        self.reset(file, startToken, endToken)
 
-        The __init__ method may be documented in either the class level
-        docstring, or as a docstring on the __init__ method itself.
-
-        Either form is acceptable, but the two should not be mixed. Choose one
-        convention to document the __init__ method and be consistent with it.
-
-        Note:
-            Do not include the `self` parameter in the ``Args`` section.
-
-        Args:
-            param1 (str): Description of `param1`.
-            param2 (:obj:`int`, optional): Description of `param2`. Multiple
-                lines are supported.
-            param3 (:obj:`list` of :obj:`str`): Description of `param3`.
-
-        """
-        
+    def reset(self, file, startToken, endToken):
         self.resetStartFound()
         self.raw_data = []
         self.file = file
         self.startToken = startToken
         self.endToken = endToken
+        self.result = Result()
         self.results = []
         self.getRawData()
     
     def getRawData(self):
-        with open(self.file, 'rb') as f:
-            for line in f:
-                self.raw_data.append(line)
+        try:
+            with open(self.file, 'rb') as f:
+                for line in f:
+                    self.raw_data.append(line)
+        except Exception as e:
+            self.noFile()
 
+    def noFile(self):
+        self.raw_data.append(self.file)
 
     def yieldParse(self, data):
-        result = Result()
         for line in data:
             if self.startToken in line:
                 self.startFound = True
-                result.start = line
+                self.result.start = line
             elif self.endToken not in line and self.startFound == True:
-                result.content.append(line)
+                self.result.content.append(line)
             elif self.endToken in line:
-                result.end = line
+                self.result.end = line
                 self.startFound = False
-                yield result
+                yield self.result
+
     def parseObj(self, fs, startToken, endToken):
-        result = []
         for item in self.yieldParse(fs,startToken,endToken):
-            result.append(item)
+            self.results.append(item)
         return result    
     
     def resetStartFound(self):
@@ -123,7 +112,9 @@ class ParseObj(object):
         for result in self.process():
             self.results.append(result)
         
-        print(len(self.results))    
+        print(len(self.results))
+        # for item in self.results:
+            # print(item.getValue())    
 
 
 if __name__ == '__main__':
